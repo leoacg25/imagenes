@@ -259,19 +259,19 @@
         <p class="success-msg hidden" id="successMsg">✅ ¡Imagen guardada correctamente!</p>
 
         <p class="success-msg hidden" id="configMsg" style="color:#dc2626;margin-top:16px;">
-            ⚠️ Configura Cloudinary en las variables del script para poder subir imágenes
+            ⚠️ Configura GitHub en las variables del script para poder subir imágenes
         </p>
     </div>
 
     <script>
-        // ===== CONFIGURACIÓN DE CLOUDINARY =====
-        // 1. Crea una cuenta gratis en https://cloudinary.com
-        // 2. Copia tu Cloud Name del dashboard
-        // 3. Ve a Settings > Upload > Upload Presets > Enable Unsigned
-        // 4. Crea un preset y copia su nombre aquí
-        const CLOUDINARY_CLOUD_NAME = 'TU_CLOUD_NAME';
-        const CLOUDINARY_UPLOAD_PRESET = 'TU_UPLOAD_PRESET';
-        // ========================================
+        // ===== CONFIGURACIÓN DE GITHUB =====
+        // 1. Genera un token en https://github.com/settings/tokens (classic, repo scope)
+        // 2. Completa los datos de tu repositorio
+        const GITHUB_TOKEN = 'TU_TOKEN';
+        const GITHUB_OWNER = 'leoacg25';
+        const GITHUB_REPO = 'imagenes';
+        const GITHUB_BRANCH = 'main';
+        // ===================================
 
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
@@ -286,9 +286,8 @@
 
         let selectedFile = null;
 
-        // --- Verificar configuración ---
         function checkConfig() {
-            if (!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME === 'TU_CLOUD_NAME') {
+            if (!GITHUB_TOKEN || GITHUB_TOKEN === 'TU_TOKEN') {
                 configMsg.classList.remove('hidden');
                 dropZone.style.pointerEvents = 'none';
                 dropZone.style.opacity = '0.5';
@@ -301,12 +300,10 @@
             return true;
         }
 
-        // --- Click en drop zone ---
         dropZone.addEventListener('click', () => {
             if (checkConfig()) fileInput.click();
         });
 
-        // --- Drag & Drop ---
         dropZone.addEventListener('dragover', (e) => {
             if (!checkConfig()) return;
             e.preventDefault();
@@ -327,7 +324,6 @@
             }
         });
 
-        // --- Input file change ---
         fileInput.addEventListener('change', () => {
             const file = fileInput.files[0];
             if (file) handleFile(file);
@@ -354,41 +350,54 @@
 
         const channel = new BroadcastChannel('imagenes_channel');
 
-        // --- Subir a Cloudinary, guardar y transmitir ---
-        async function uploadToCloudinary(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        async function uploadToGitHub(file) {
+            const content = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
 
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-                method: 'POST',
-                body: formData
+            const fileName = `${Date.now()}_${file.name}`;
+            const path = `images/${fileName}`;
+
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: `Add image ${fileName}`,
+                    content: content,
+                    branch: GITHUB_BRANCH
+                })
             });
 
             if (!response.ok) {
                 const err = await response.json();
-                throw new Error(err.error?.message || 'Error al subir la imagen');
+                throw new Error(err.message || 'Error al subir la imagen');
             }
 
             const data = await response.json();
-            return { url: data.secure_url, nombre: file.name };
+            return { url: data.content.download_url, nombre: file.name };
         }
 
         saveBtn.addEventListener('click', async () => {
             if (!selectedFile) return;
 
             saveBtn.disabled = true;
-            saveBtn.textContent = '⏫ Subiendo a la nube...';
+            saveBtn.textContent = '⏫ Subiendo a GitHub...';
 
             try {
-                const { url, nombre } = await uploadToCloudinary(selectedFile);
+                const { url, nombre } = await uploadToGitHub(selectedFile);
 
                 localStorage.setItem('imagenGuardada', url);
                 localStorage.setItem('imagenNombre', nombre);
 
                 channel.postMessage({ type: 'imagen', data: url, nombre });
 
-                successMsg.textContent = '✅ ¡Imagen subida a la nube!';
+                successMsg.textContent = '✅ ¡Imagen subida a GitHub!';
                 successMsg.classList.remove('hidden');
                 saveBtn.textContent = '💾 Guardar y ver imagen';
                 deleteBtn.disabled = false;
@@ -399,7 +408,6 @@
             }
         });
 
-        // --- Borrar imagen ---
         deleteBtn.addEventListener('click', () => {
             previewImg.src = '';
             previewImg.classList.add('hidden');
@@ -418,12 +426,10 @@
             channel.postMessage({ type: 'delete' });
         });
 
-        // --- Ir a ver imagen ---
         viewBtn.addEventListener('click', () => {
             window.location.href = 'index.html';
         });
 
-        // --- Cargar preview si hay imagen persistida al volver ---
         (function() {
             const saved = localStorage.getItem('imagenGuardada');
             const savedName = localStorage.getItem('imagenNombre');
