@@ -184,16 +184,13 @@
         const imageContainer = document.getElementById('imageContainer');
         const fileNameDisplay = document.getElementById('fileNameDisplay');
 
-        function mostrarImagen() {
-            const imagenData = localStorage.getItem('imagenGuardada');
-            const imagenNombre = localStorage.getItem('imagenNombre');
+        const channel = new BroadcastChannel('imagenes_channel');
 
-            if (imagenData) {
-                // Mostrar imagen
-                imageContainer.innerHTML = `<img src="${imagenData}" alt="Imagen guardada">`;
-                fileNameDisplay.textContent = imagenNombre ? `📎 ${imagenNombre}` : '';
+        function mostrarImagen(data, nombre) {
+            if (data) {
+                imageContainer.innerHTML = `<img src="${data}" alt="Imagen guardada">`;
+                fileNameDisplay.textContent = nombre ? `📎 ${nombre}` : '';
             } else {
-                // Estado vacío
                 imageContainer.innerHTML = `
                     <div class="empty-state">
                         <span class="emoji">📭</span>
@@ -204,18 +201,17 @@
             }
         }
 
-        // Escuchar cambios en localStorage desde otras pestañas
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'imagenGuardada' || e.key === 'imagenNombre') {
-                mostrarImagen();
+        channel.onmessage = (event) => {
+            const { type, data, nombre } = event.data;
+            if (type === 'imagen') {
+                mostrarImagen(data, nombre);
+            } else if (type === 'delete') {
+                mostrarImagen(null, null);
             }
-        });
+        };
 
-        // Cargar al iniciar
-        mostrarImagen();
-
-        // También recargar cuando la página gana foco (por si se guardó desde otra pestaña)
-        window.addEventListener('focus', mostrarImagen);
+        // Estado inicial vacío
+        mostrarImagen(null, null);
     </script>
 
 </body>
