@@ -204,14 +204,20 @@
         channel.onmessage = (event) => {
             const { type, data, nombre } = event.data;
             if (type === 'imagen') {
+                localStorage.setItem('imagenGuardada', data);
+                localStorage.setItem('imagenNombre', nombre);
                 mostrarImagen(data, nombre);
             } else if (type === 'delete') {
+                localStorage.removeItem('imagenGuardada');
+                localStorage.removeItem('imagenNombre');
                 mostrarImagen(null, null);
             }
         };
 
-        // Estado inicial vacío
-        mostrarImagen(null, null);
+        // Cargar imagen persistida al iniciar
+        const savedData = localStorage.getItem('imagenGuardada');
+        const savedName = localStorage.getItem('imagenNombre');
+        mostrarImagen(savedData, savedName);
     </script>
 
 </body>

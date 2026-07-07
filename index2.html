@@ -323,17 +323,19 @@
 
         const channel = new BroadcastChannel('imagenes_channel');
 
-        // --- Guardar y transmitir en vivo ---
+        // --- Guardar en localStorage y transmitir en vivo ---
         saveBtn.addEventListener('click', () => {
             if (!selectedFile) return;
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                channel.postMessage({
-                    type: 'imagen',
-                    data: e.target.result,
-                    nombre: selectedFile.name
-                });
+                const data = e.target.result;
+                const nombre = selectedFile.name;
+
+                localStorage.setItem('imagenGuardada', data);
+                localStorage.setItem('imagenNombre', nombre);
+
+                channel.postMessage({ type: 'imagen', data, nombre });
 
                 successMsg.classList.remove('hidden');
                 saveBtn.disabled = true;
@@ -343,7 +345,6 @@
 
         // --- Borrar imagen ---
         deleteBtn.addEventListener('click', () => {
-            // Limpiar UI
             previewImg.src = '';
             previewImg.classList.add('hidden');
             placeholder.classList.remove('hidden');
@@ -353,11 +354,11 @@
             saveBtn.disabled = true;
             successMsg.classList.add('hidden');
             deleteBtn.disabled = true;
-            
-            // Resetear input file
             fileInput.value = '';
 
-            // Notificar en vivo
+            localStorage.removeItem('imagenGuardada');
+            localStorage.removeItem('imagenNombre');
+
             channel.postMessage({ type: 'delete' });
         });
 
@@ -365,6 +366,21 @@
         viewBtn.addEventListener('click', () => {
             window.location.href = 'index.html';
         });
+
+        // --- Cargar preview si hay imagen persistida al volver ---
+        (function() {
+            const saved = localStorage.getItem('imagenGuardada');
+            const savedName = localStorage.getItem('imagenNombre');
+            if (saved) {
+                previewImg.src = saved;
+                previewImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                dropZone.classList.add('has-image');
+                fileInfo.textContent = savedName ? `📎 ${savedName} (guardada)` : '📎 Imagen guardada';
+                saveBtn.disabled = true;
+                deleteBtn.disabled = false;
+            }
+        })();
     </script>
 
 </body>
