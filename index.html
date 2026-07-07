@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ver Imagen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            padding: 32px;
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .icon-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #f0fdf4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 26px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            color: #2d3748;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        /* Contenedor de imagen - Totalmente responsive */
+        .image-container {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            border-radius: 8px;
+            object-fit: contain;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            display: block;
+        }
+
+        /* Estado vacío */
+        .empty-state {
+            color: #94a3b8;
+            padding: 40px 20px;
+        }
+
+        .empty-state .emoji {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .empty-state .hint {
+            font-size: 0.8rem;
+            color: #b0bcc9;
+        }
+
+        .file-name {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .image-container img {
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* Media queries para pantallas pequeñas */
+        @media (max-width: 640px) {
+            .card {
+                padding: 16px;
+            }
+
+            .image-container {
+                padding: 8px;
+                min-height: 150px;
+            }
+
+            .image-container img {
+                max-height: 60vh;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            .subtitle {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .card {
+                padding: 12px;
+            }
+
+            .image-container {
+                padding: 4px;
+                min-height: 100px;
+            }
+
+            .image-container img {
+                max-height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="icon-circle">🖼️</div>
+        <h1>Imagen Guardada</h1>
+        <p class="subtitle">Aquí se muestra la imagen que cargaste</p>
+
+        <!-- Contenedor de la imagen -->
+        <div class="image-container" id="imageContainer">
+            <!-- Se llena dinámicamente con JS -->
+        </div>
+
+        <p class="file-name" id="fileNameDisplay"></p>
+    </div>
+
+    <script>
+        const imageContainer = document.getElementById('imageContainer');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+
+        function mostrarImagen() {
+            const imagenData = localStorage.getItem('imagenGuardada');
+            const imagenNombre = localStorage.getItem('imagenNombre');
+
+            if (imagenData) {
+                // Mostrar imagen
+                imageContainer.innerHTML = `<img src="${imagenData}" alt="Imagen guardada">`;
+                fileNameDisplay.textContent = imagenNombre ? `📎 ${imagenNombre}` : '';
+            } else {
+                // Estado vacío
+                imageContainer.innerHTML = `
+                    <div class="empty-state">
+                        <span class="emoji">📭</span>
+                        <p>No hay ninguna imagen guardada</p>
+                        <span class="hint">Ve a la página de carga para subir una</span>
+                    </div>`;
+                fileNameDisplay.textContent = '';
+            }
+        }
+
+        // Escuchar cambios en localStorage desde otras pestañas
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'imagenGuardada' || e.key === 'imagenNombre') {
+                mostrarImagen();
+            }
+        });
+
+        // Cargar al iniciar
+        mostrarImagen();
+
+        // También recargar cuando la página gana foco (por si se guardó desde otra pestaña)
+        window.addEventListener('focus', mostrarImagen);
+    </script>
+
+</body>
+</html>
