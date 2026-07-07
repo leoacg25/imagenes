@@ -340,11 +340,6 @@
                 checkConfig();
             }, 1000);
         });
-            configMsg.classList.add('hidden');
-            dropZone.style.pointerEvents = '';
-            dropZone.style.opacity = '';
-            return true;
-        }
 
         dropZone.addEventListener('click', () => {
             if (checkConfig()) fileInput.click();
