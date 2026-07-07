@@ -214,9 +214,25 @@
             }
         };
 
-        const savedData = localStorage.getItem('imagenGuardada');
-        const savedName = localStorage.getItem('imagenNombre');
-        mostrarImagen(savedData, savedName);
+        // Obtener última imagen del repositorio (funciona en cualquier dispositivo)
+        async function cargarDesdeRepo() {
+            try {
+                const response = await fetch('https://api.github.com/repos/leoacg25/imagenes/contents/images');
+                if (!response.ok) return;
+                const files = await response.json();
+                if (files.length === 0) return;
+                const ultima = files[files.length - 1];
+                const nombre = ultima.name.replace(/^\d+_/, '');
+                mostrarImagen(ultima.download_url, nombre);
+            } catch (e) {
+                // Si falla, intenta con localStorage
+                const savedData = localStorage.getItem('imagenGuardada');
+                const savedName = localStorage.getItem('imagenNombre');
+                if (savedData) mostrarImagen(savedData, savedName);
+            }
+        }
+
+        cargarDesdeRepo();
     </script>
 
 </body>
