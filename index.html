@@ -217,7 +217,7 @@
         // Obtener última imagen del repositorio (funciona en cualquier dispositivo)
         async function cargarDesdeRepo() {
             try {
-                const response = await fetch('https://api.github.com/repos/leoacg25/imagenes/contents/images');
+                const response = await fetch('https://api.github.com/repos/leoacg25/imagenes/contents/images?t=' + Date.now());
                 if (!response.ok) return;
                 const files = await response.json();
                 if (files.length === 0) return;
